@@ -1,51 +1,62 @@
 package com.example.td6_punkapi;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.example.td6_punkapi.adapter.BeerAdapter;
 import com.example.td6_punkapi.model.Beer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
+import com.koushikdutta.ion.Response;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
     private ListView listViewBeers;
+    private ArrayList<Beer> beers;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ArrayList<Beer> beers = new ArrayList<>();
+        beers = new ArrayList<>();
 
         EditText editTextNameBeer = findViewById(R.id.nameBeer1);
         Button buttonRechercher = findViewById(R.id.recherche);
         SeekBar seekBarNumberMaxLines = findViewById(R.id.seekBar);
+        TextView textViewLignesMax = findViewById(R.id.textViewNombre);
 
-        final int step = 1;
-        final int max = 150;
-        final int min = 5;
-        double valueSeekBar = 0.0;
-        seekBarNumberMaxLines.setMax((max - min) / step );
+
+        seekBarNumberMaxLines.setMax(150);
+        seekBarNumberMaxLines.setMin(5);
 
         seekBarNumberMaxLines.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            double valueSeekBar = 0.0;
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                valueSeekBar = min + (i * step);
+                textViewLignesMax.setText(i+" Max. de lignes");
             }
 
             @Override
@@ -63,7 +74,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 String name_beer = editTextNameBeer.getText().toString();
-                if(name_beer != "") beers = getBeersByFetchUrl(name_beer, seekBarNumberMaxLines.get);
+                System.out.println(seekBarNumberMaxLines.getProgress());
+                if(name_beer != "") addBeersByFetchUrl(name_beer, seekBarNumberMaxLines.getProgress());
+                for(Beer beer : beers){
+                    System.out.println(beer.toString());
+                }
             }
         });
 
@@ -73,41 +88,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private ArrayList<Beer> getBeersByFetchUrl(String query, Integer numberMaxLines){
+    private void addBeersByFetchUrl(String query, Integer numberMaxLines){
         //UN PAGE
-        ArrayList<Beer> beers = new ArrayList<>();
+        beers = new ArrayList<>();
 
         final Integer per_page = 80;
-
-        if(numberMaxLines > 80){
-            Integer i = 0;
-            while(numberMaxLines > 80){
-                beers.addAll(getBeersByJson(query, i, 80, 80));
-                numberMaxLines-=80;
-                i++;
-            }
-            beers.addAll(getBeersByJson(query, i, per_page, numberMaxLines));
+        System.out.println("Starting");
+        Integer i = 1;
+        while(numberMaxLines > 80){
+            addBeersByJson(query, i, 80, 80);
+            numberMaxLines-=80;
+            i++;
         }
-
-        return beers;
+        addBeersByJson(query, i, 80,numberMaxLines);
     }
 
-    private ArrayList<Beer> getBeersByJson(String query, Integer i, Integer per_page, Integer limit){
-        final Integer[] countLimit = {limit};
-        ArrayList<Beer> beers = new ArrayList<>();
+    public interface customCallBack {
+        void onCompleted(Exception e, Response<JsonObject> response);
+    }
+
+
+    private void addBeersByJson(String query, Integer i, Integer per_page, Integer limit){
         Ion.with(this).load("https://api.punkapi.com/v2/beers?beer_name="+query+"&page="+i+"&per_page="+per_page).asJsonArray().setCallback(new FutureCallback<JsonArray>() {
             @Override
             public void onCompleted(Exception e, JsonArray result) {
+                Integer countLimit = limit;
                 for(JsonElement jsonElement : result){
-                    String name = jsonElement.getAsJsonObject().get("name").getAsString();
-                    String tagling = jsonElement.getAsJsonObject().get("tagline").getAsString();
-                    String imageUrl = jsonElement.getAsJsonObject().get("image_url").getAsString();
-                    beers.add(new Beer(name,tagling,imageUrl));
-                    if(countLimit[0]-- == 0) break;
+                    JsonObject j = jsonElement.getAsJsonObject();
+                    String name = j.get("name").getAsString();
+                    String tagling = j.get("tagline").getAsString();
+                    String imageUrl = j.get("image_url").getAsString();
+                    JsonElement jsonSrm = j.get("srm");
+                    Integer srm;
+                    if(jsonSrm.isJsonNull()) srm = 0;
+                    else srm = Math.round(jsonSrm.getAsFloat());
+                    Beer beer = new Beer(name,tagling,imageUrl, srm);
+                    //System.out.println(beer.toString());
+                    beers.add(beer);
+                    //System.out.println(countLimit);
+                    if(countLimit-- == 0) break;
                 }
             }
         });
-        return beers;
+
     }
 
 

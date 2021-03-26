@@ -63,7 +63,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_weight="0.3" />
+            android:layout_weight="0.3"
+            android:progress="5" />
 
         <TextView
             android:id="@+id/textViewNombre"
@@ -72,7 +73,7 @@
             android:layout_gravity="center"
             android:layout_weight="0.7"
             android:gravity="center"
-            android:text="Nombre de max. lignes" />
+            android:text="5 max. lignes" />
 
     </LinearLayout>
 
