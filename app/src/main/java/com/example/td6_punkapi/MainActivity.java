@@ -117,15 +117,22 @@ public class MainActivity extends AppCompatActivity {
                     JsonObject j = jsonElement.getAsJsonObject();
                     String name = j.get("name").getAsString();
                     String tagling = j.get("tagline").getAsString();
-                    String imageUrl = j.get("image_url").getAsString();
+
+                    //VERIFICATION URL
+                    JsonElement jsonImageUrl = j.get("image_url");
+                    String imageUrl;
+                    if(jsonImageUrl.isJsonNull()) imageUrl = "available";
+                    else imageUrl = jsonImageUrl.getAsString();
+
+                    //VERIFICATION SRM
                     JsonElement jsonSrm = j.get("srm");
                     Integer srm;
                     if(jsonSrm.isJsonNull()) srm = 0;
                     else srm = Math.round(jsonSrm.getAsFloat());
+
+
                     Beer beer = new Beer(name,tagling,imageUrl, srm);
-                    //System.out.println(beer.toString());
                     beers.add(beer);
-                    //System.out.println(countLimit);
                     if(countLimit-- == 0) break;
                 }
             }

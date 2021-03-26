@@ -17,6 +17,7 @@ import com.example.td6_punkapi.R;
 import com.example.td6_punkapi.model.Beer;
 import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -48,7 +49,10 @@ public class BeerAdapter extends ArrayAdapter<Beer> {
         //TRAITEMENT
         textViewNameBeer.setText(beer.getName());
         textViewTaglineBeer.setText(beer.getTagline());
-        Picasso.get().load(beer.getUrlImage()).into(imageBeer);
+
+
+
+        Picasso.get().load((beer.getUrlImage().equals("available")) ? "drawable://"+R.drawable.photo_available : beer.getUrlImage()).into(imageBeer);
         Integer srm =  beer.getSrm();
         if(!srmCode.containsKey(beer.getSrm())) srm = 30;
         linearLayoutH.setBackgroundColor(Color.parseColor(srmCode.get(srm)));
